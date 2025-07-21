@@ -33,52 +33,6 @@ export const getAuth = async (req, res,) => {
 }
 
 
-// export const getPr = async (req, res) => {
-//   const { accessToken, username } = req.body;
-
-//   if (!accessToken || !username) {
-//     return res.status(400).json({ error: "accessToken and username are required" });
-//   }
-
-//   const octokit = new Octokit({ auth: accessToken });
-
-//   let page = 1;
-//   let allPRs = [];
-
-//   try {
-//     while (true) {
-//       const response = await octokit.request('GET /search/issues',{
-//         q: `type:pr author:${username}`,
-//         per_page: 100,
-//         page,
-//       });
-
-//       allPRs.push(...response.data.items);
-
-//       if (response.data.items.length < 100) break;
-//       page++;
-//     }
-
-//     // Return to client
-//     res.json({
-//       count: allPRs.length,
-//       pullRequests: allPRs.map(pr => ({
-//         title: pr.title,
-//         number: pr.number,
-//         url: pr.html_url,
-//         repo: pr.repository_url.split('/').slice(-2).join('/'),
-//         state: pr.state
-//       }))
-//     });
-
-//   } catch (error) {
-//     console.error("Error fetching PRs:", error.message);
-//     res.status(500).json({ error: "Failed to fetch pull requests" });
-//   }
-// };
-
-
-
 const graphqlWithAuth = graphql.defaults({
   headers: {
     authorization: `token ${process.env.GITHUB_TOKEN}`,
@@ -87,9 +41,21 @@ const graphqlWithAuth = graphql.defaults({
 
 export const getPR = async (req, res) => {
      
-    const {username} = req.body;
+    const {username, accessToken} = req.body;
 
   try {
+
+    if (!accessToken) {
+    return res.status(400).json({ error: "Missing accessToken" });
+  }
+
+  const graphqlWithAuth = graphql.defaults({
+    headers: {
+      authorization: `token ${accessToken}`,
+    },
+  });
+
+
     const response = await graphqlWithAuth(`
       query ($searchQuery: String!) {
         search(query: $searchQuery, type: ISSUE, first: 100) {
@@ -123,22 +89,35 @@ export const getPR = async (req, res) => {
 }
 
 export const getReview = async (req, res) => {
-  const { owner, repo, prnum } = req.body;
+  const { owner, repo, prnum, accessToken } = req.body;
 
   try {
+
+
+    if (!accessToken) {
+    return res.status(400).json({ error: "Missing accessToken" });
+  }
+
+  const graphqlWithAuth = graphql.defaults({
+    headers: {
+      authorization: `token ${accessToken}`,
+    },
+  });
+
+  
     const query = `
       query($owner: String!, $repo: String!, $prNumber: Int!) {
         repository(owner: $owner, name: $repo) {
           pullRequest(number: $prNumber) {
             title
 
-            reviews(first: 10) {
+            reviews(first: 100) {
               nodes {
                 author { login }
                 body
                 state
                 submittedAt
-                comments(first: 10) {
+                comments(first: 100) {
                   nodes {
                     body
                     path
@@ -152,7 +131,7 @@ export const getReview = async (req, res) => {
               }
             }
 
-            reviewRequests(first: 10) {
+            reviewRequests(first: 100) {
               nodes {
                 requestedReviewer {
                   ... on User {
@@ -162,7 +141,7 @@ export const getReview = async (req, res) => {
               }
             }
 
-            comments(first: 10) {
+            comments(first: 100) {
               nodes {
                 author { login }
                 body
@@ -181,20 +160,45 @@ export const getReview = async (req, res) => {
     });
 
     const pr = response.repository.pullRequest;
+    let ar = [];
+    pr.reviews.nodes.map((r, index) => {
+        
+        let obj = {
+          id : index+1,
+          author : r.author.login,
+          content : !r.comments.nodes[0] ? r.body : r.comments.nodes[0].body,
+          sentiment : "positive",
+          date : r.submittedAt.split('T')[0],
+          isReviewer : r.comments.nodes.length > 0 ? true : false
+        }
 
-    res.json({
-      title: pr.title,
-      reviews: pr.reviews.nodes,
-      comments: pr.comments.nodes,
-      reviewRequests: pr.reviewRequests.nodes.map(r => r.requestedReviewer?.login),
+        
+        ar.push(obj);
+        
     });
+
+    const length = ar.length;
+    pr.comments.nodes.map((c, index) => {
+        let obj = {
+          id : length + index+1,
+          author : c.author.login,
+          content :  c.body,
+          sentiment : "positive",
+          date : c.createdAt.split('T')[0],
+          isReviewer : false
+        }
+
+        ar.push(obj);
+    })
+
+     res.send(ar);
+
 
   } catch (error) {
     console.error("Error fetching PR feedback:", error);
     res.status(500).json({ error });
   }
 };
-
 
 
 export const getGitHubUserProfile = async (req, res) => {
@@ -236,5 +240,143 @@ export const getGitHubUserProfile = async (req, res) => {
   } catch (error) {
     console.error("GitHub GraphQL error:", error.message);
     res.status(500).json({ error: "Failed to fetch user info" });
+  }
+};
+
+
+export const getPRStats = async (req, res) => {
+  const { owner, repo, prnum, accessToken } = req.body;
+
+  try {
+    const response = await axios.get(
+      `https://api.github.com/repos/${owner}/${repo}/pulls/${prnum}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/vnd.github+json',
+        },
+      }
+    );
+
+    const { additions, deletions, changed_files } = response.data;
+
+    // res.json({
+    //   additions,
+    //   deletions,
+    //   changed_files,
+    //   total_changes: additions + deletions,
+    // });
+
+    res.json({"data" : response.data});
+  } catch (error) {
+    console.error("Error fetching PR stats:", error);
+    res.status(500).json({ error: "Failed to get PR statistics" });
+  }
+};
+
+
+
+export const getPRDiffs = async (req, res) => {
+  const { owner, repo, prnum, accessToken } = req.body;
+
+  try {
+    const response = await axios.get(
+      `https://api.github.com/repos/${owner}/${repo}/pulls/${prnum}/files`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/vnd.github+json',
+        },
+      }
+    );
+
+    // For each file, return patch (diff) + stats
+    const files = response.data.map(file => ({
+      filename: file.filename,
+      status: file.status,
+      additions: file.additions,
+      deletions: file.deletions,
+      patch: file.patch, // diff text (can be null for binary files)
+    }));
+
+    res.json({ files });
+  } catch (error) {
+    console.error("Error fetching PR file diffs:", error.message);
+    res.status(500).json({ error: "Failed to fetch PR file changes" });
+  }
+};
+
+const extractLines = (patch, type) => {
+          if (!patch) return [];
+          return patch
+            .split("\n")
+            .filter(line => line.startsWith(type) && !line.startsWith(type + type))
+            .map(line => line.slice(1));
+        }
+
+
+
+
+
+export const getUserPRs = async (req, res) => {
+  const { accessToken, username } = req.body;
+
+  if (!accessToken || !username) {
+    return res.status(400).json({ error: "Missing accessToken or username" });
+  }
+
+  try {
+    const prList = await axios.get(`https://api.github.com/search/issues?q=type:pr+author:${username}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    
+    const detailedPRs = await Promise.all(
+      prList.data.items.map(async (pr) => {
+        const [owner, repo] = pr.repository_url.replace("https://api.github.com/repos/", "").split("/");
+        const prNumber = pr.number;
+
+        const filesRes = await axios.get(`https://api.github.com/repos/${owner}/${repo}/pulls/${prNumber}/files`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+
+      
+
+        const ReviewRes = await axios.post('http://localhost:'+process.env.PORT+'/api/auth/getreview', {
+             accessToken,
+             owner,
+             repo,
+             prnum : prNumber
+        })
+        
+        const files = filesRes.data.map(f => ({
+          file: f.filename,
+          changes: `+${f.additions} -${f.deletions}`,
+          additions: extractLines(f.patch, '+'),
+          deletions: extractLines(f.patch, '-')
+        }));
+
+        return {
+          id: prNumber,
+          title: pr.title,
+          repo: `${owner}/${repo}`,
+          status: pr.state === "closed" ? (pr.pull_request?.merged_at ? "accepted" : "rejected") : "pending",
+          author: pr.user.login,
+          date: pr.created_at,
+          filesChanged: files.length,
+          linesAdded: files.reduce((sum, f) => sum + f.additions.length, 0),
+          linesRemoved: files.reduce((sum, f) => sum + f.deletions.length, 0),
+          score: Math.floor(Math.random() * 40) + 60, // mock score (replace later)
+          url: pr.html_url,
+          files,
+          comments : ReviewRes.data
+        };
+      })
+    );
+
+    res.json({ pullRequests: detailedPRs });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch PRs" });
   }
 };

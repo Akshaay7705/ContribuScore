@@ -14,6 +14,7 @@ import {
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import clsx from 'clsx';
+import { mockUser } from '../data/mockData';
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
@@ -22,6 +23,7 @@ export default function Navbar() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const curuser = mockUser;
 
   const currentView = location.pathname === '/' ? 'dashboard' : 
                      location.pathname === '/pull-requests' ? 'pull-requests' : 
@@ -30,12 +32,12 @@ export default function Navbar() {
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: ChartBarIcon, path: '/' },
     { id: 'pull-requests', label: 'Pull Requests', icon: DocumentTextIcon, path: '/pull-requests' },
-    { id: 'public-profile', label: 'Public Profile', icon: UserCircleIcon, path: '/public-profile' }
+    { id: 'public-profile', label: 'Public Profile', icon: UserCircleIcon, path: `/public-profile/${curuser.username}` }
   ];
 
   const handleLogout = () => {
     logout();
-    navigate('/signin');
+    navigate('/auth');
     setIsProfileDropdownOpen(false);
   };
 
@@ -92,7 +94,11 @@ export default function Navbar() {
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                 className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                
+                <img
+                  src={user?.avatar}
+                  alt={user?.name}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
                 <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300">
                   {user?.name}
                 </span>

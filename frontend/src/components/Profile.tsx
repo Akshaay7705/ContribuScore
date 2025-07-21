@@ -11,6 +11,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { mockUser, mockPRs } from '../data/mockData';
 import { format } from 'date-fns';
+import { useParams } from "react-router-dom";
+
+
 
 export default function Profile() {
   const user = mockUser;
@@ -19,6 +22,7 @@ export default function Profile() {
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
 
+  const {id} = useParams();
   const shareableUrl = `pr-insight.dev/${user.username}`;
 
   const stats = [
@@ -49,6 +53,7 @@ export default function Profile() {
   ];
 
   return (
+    
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 mb-6">
@@ -59,7 +64,7 @@ export default function Profile() {
             className="w-32 h-32 rounded-full object-cover"
           />
           <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{user.name}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{id}</h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-3">@{user.username}</p>
             <p className="text-gray-700 dark:text-gray-300 mb-4">{user.bio}</p>
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">

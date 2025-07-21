@@ -5,6 +5,7 @@ export interface PullRequest {
   status: 'pending' | 'accepted' | 'rejected';
   author: string;
   date: string;
+  files: File[];
   filesChanged: number;
   linesAdded: number;
   linesRemoved: number;
@@ -12,6 +13,14 @@ export interface PullRequest {
   comments: Comment[];
   score: number;
   url: string;
+  
+}
+
+export interface File{
+  file: string;
+  changes: string;
+  additions:string[];
+  deletions:string[];
 }
 
 export interface Comment {
@@ -66,8 +75,7 @@ export interface User {
 export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (userData: { name: string; email: string; password: string; bio: string; location: string; isStudent: boolean; company?: string }) => Promise<void>;
+  loginWithGitHub: () => void;
   logout: () => void;
   loading: boolean;
 }

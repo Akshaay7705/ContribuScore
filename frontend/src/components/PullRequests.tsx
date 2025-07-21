@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   MagnifyingGlassIcon, 
   FunnelIcon, 
@@ -11,15 +11,40 @@ import {
   ClockIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline';
-import { mockPRs } from '../data/mockData';
+// import { mockPRs } from '../data/mockData';
 import { format } from 'date-fns';
 import clsx from 'clsx';
+import { Line } from 'recharts';
+import axios from 'axios';
+import { TailSpin } from 'react-loader-spinner';
 
 export default function PullRequests() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
   const [dateFilter, setDateFilter] = useState<'all' | 'week' | 'month' | 'quarter'>('all');
   const [expandedPR, setExpandedPR] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const [mockPRs, setMockPRs] = useState([]);
+  const getPR = async () => {
+  setLoading(true); // start loading
+  try {
+    const token = localStorage.getItem('token');
+    const userString = localStorage.getItem('user');
+    const username = userString ? JSON.parse(userString).username : null;
+
+    const res = await axios.post(import.meta.env.VITE_BACKEND_ROUTE + '/api/auth/get-prs', {
+      accessToken: token,
+      username
+    });
+
+    setMockPRs(res.data.pullRequests); // you should use setState
+  } catch (err) {
+    console.error("Failed to fetch PRs", err);
+  } finally {
+    setLoading(false); // end loading
+  }
+};
 
   const filteredPRs = mockPRs.filter(pr => {
     const matchesSearch = pr.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -48,6 +73,8 @@ export default function PullRequests() {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
+
+  
   const getStatusBadge = (status: string) => {
     const styles = {
       accepted: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
@@ -75,35 +102,26 @@ export default function PullRequests() {
     return styles[sentiment as keyof typeof styles] || styles.neutral;
   };
 
+
+  
+
   const generateMockDiff = (pr: any) => {
-    return [
-      { 
-        file: 'src/components/Auth.tsx', 
-        changes: '+45 -12',
-        additions: [
-          '+ import { validateToken } from "../utils/auth";',
-          '+ const isAuthenticated = validateToken(token);',
-          '+ if (!isAuthenticated) throw new Error("Invalid token");'
-        ],
-        deletions: [
-          '- // TODO: Add authentication',
-          '- const user = mockUser;'
-        ]
-      },
-      { 
-        file: 'src/middleware/auth.ts', 
-        changes: '+128 -8',
-        additions: [
-          '+ export const authMiddleware = (req, res, next) => {',
-          '+   const token = req.headers.authorization?.split(" ")[1];',
-          '+   if (!token) return res.status(401).json({ error: "No token" });'
-        ],
-        deletions: [
-          '- // Placeholder middleware'
-        ]
-      }
-    ];
-  };
+  if (!pr.files || pr.files.length === 0) return [];
+
+  return pr.files.map((file: any) => {
+    return {
+      file: file.file,
+      changes: file.changes,
+      additions: file.additions,
+      deletions: file.deletions,
+    };
+  });
+};
+
+
+useEffect(() => {
+     getPR();
+},[]);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -167,12 +185,21 @@ export default function PullRequests() {
       </div>
 
       {/* PR List */}
+      {loading ? (
+  <div className="flex justify-center items-center h-60">
+    <TailSpin height="48" width="48" color="#3b82f6" />
+  </div>
+) : 
       <div className="space-y-4">
         {filteredPRs.map((pr) => {
           const StatusIcon = getStatusIcon(pr.status);
           const isExpanded = expandedPR === pr.id;
+
+          
           const mockDiff = generateMockDiff(pr);
 
+          console.log(mockDiff);
+          
           return (
             <div key={pr.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
               <div 
@@ -236,28 +263,40 @@ export default function PullRequests() {
                         Files Changed ({pr.filesChanged})
                       </h4>
                       <div className="space-y-4">
-                        {mockDiff.map((file, index) => (
+                       {mockDiff.map((file, index) => {
+                        // console.log(file);
+                        
+                        return (
                           <div key={index} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                             <div className="flex items-center justify-between mb-3">
                               <span className="font-mono text-sm text-gray-900 dark:text-white">{file.file}</span>
                               <span className="text-sm text-gray-600 dark:text-gray-400">{file.changes}</span>
                             </div>
                             <div className="space-y-2">
-                              {file.additions.map((line, lineIndex) => (
-                                <div key={lineIndex} className="font-mono text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900 p-2 rounded">
+                              {file.additions?.map((line, lineIndex) => (
+                                <div
+                                  key={lineIndex}
+                                  className="font-mono text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900 p-2 rounded"
+                                >
                                   {line}
                                 </div>
                               ))}
-                              {file.deletions.map((line, lineIndex) => (
-                                <div key={lineIndex} className="font-mono text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900 p-2 rounded">
+                              {file.deletions?.map((line, lineIndex) => (
+                                <div
+                                  key={lineIndex}
+                                  className="font-mono text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900 p-2 rounded"
+                                >
                                   {line}
                                 </div>
                               ))}
                             </div>
                           </div>
-                        ))}
+                        );
+                      })}
+
                       </div>
                     </div>
+
 
                     {/* Comments */}
                     <div>
@@ -307,14 +346,18 @@ export default function PullRequests() {
             </div>
           );
         })}
-      </div>
 
-      {filteredPRs.length === 0 && (
+         {filteredPRs.length === 0 && (
         <div className="text-center py-12">
           <DocumentTextIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">No pull requests found matching your criteria.</p>
         </div>
       )}
+      </div>
+
+      }
+
+     
     </div>
   );
 }

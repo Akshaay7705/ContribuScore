@@ -22,13 +22,38 @@ export const mockPRs: PullRequest[] = [
     repo: 'techcorp/backend-api',
     status: 'accepted',
     author: 'akshaaybs',
-    date: '2024-01-15',
+    date: '2025-07-15',
     filesChanged: 8,
     linesAdded: 245,
     linesRemoved: 32,
     reviewers: ['johndoe', 'janesmith'],
     score: 92,
     url: 'https://github.com/techcorp/backend-api/pull/123',
+    files : [{ 
+        file: 'src/components/Auth.tsx', 
+        changes: '+45 -12',
+        additions: [
+          '+ import { validateToken } from "../utils/auth";',
+          '+ const isAuthenticated = validateToken(token);',
+          '+ if (!isAuthenticated) throw new Error("Invalid token");'
+        ],
+        deletions: [
+          '- // TODO: Add authentication',
+          '- const user = mockUser;'
+        ]
+      },
+      { 
+        file: 'src/middleware/auth.ts', 
+        changes: '+128 -8',
+        additions: [
+          '+ export const authMiddleware = (req, res, next) => {',
+          '+   const token = req.headers.authorization?.split(" ")[1];',
+          '+   if (!token) return res.status(401).json({ error: "No token" });'
+        ],
+        deletions: [
+          '- // Placeholder middleware'
+        ]
+      }], 
     comments: [
       {
         id: '1',
@@ -44,7 +69,7 @@ export const mockPRs: PullRequest[] = [
         content: 'Minor: Consider adding more error handling for edge cases.',
         sentiment: 'neutral',
         date: '2024-01-16',
-        isReviewer: true
+        isReviewer: false
       }
     ]
   },
@@ -61,6 +86,31 @@ export const mockPRs: PullRequest[] = [
     reviewers: ['mikewilson'],
     score: 85,
     url: 'https://github.com/techcorp/frontend-app/pull/456',
+    files : [{ 
+        file: 'src/components/Auth.tsx', 
+        changes: '+45 -12',
+        additions: [
+          '+ import { validateToken } from "../utils/auth";',
+          '+ const isAuthenticated = validateToken(token);',
+          '+ if (!isAuthenticated) throw new Error("Invalid token");'
+        ],
+        deletions: [
+          '- // TODO: Add authentication',
+          '- const user = mockUser;'
+        ]
+      },
+      { 
+        file: 'src/middleware/auth.ts', 
+        changes: '+128 -8',
+        additions: [
+          '+ export const authMiddleware = (req, res, next) => {',
+          '+   const token = req.headers.authorization?.split(" ")[1];',
+          '+   if (!token) return res.status(401).json({ error: "No token" });'
+        ],
+        deletions: [
+          '- // Placeholder middleware'
+        ]
+      }],
     comments: [
       {
         id: '3',
@@ -85,6 +135,31 @@ export const mockPRs: PullRequest[] = [
     reviewers: ['sarahconnor'],
     score: 45,
     url: 'https://github.com/techcorp/data-pipeline/pull/789',
+    files : [{ 
+        file: 'src/components/Auth.tsx', 
+        changes: '+45 -12',
+        additions: [
+          '+ import { validateToken } from "../utils/auth";',
+          '+ const isAuthenticated = validateToken(token);',
+          '+ if (!isAuthenticated) throw new Error("Invalid token");'
+        ],
+        deletions: [
+          '- // TODO: Add authentication',
+          '- const user = mockUser;'
+        ]
+      },
+      { 
+        file: 'src/middleware/auth.ts', 
+        changes: '+128 -8',
+        additions: [
+          '+ export const authMiddleware = (req, res, next) => {',
+          '+   const token = req.headers.authorization?.split(" ")[1];',
+          '+   if (!token) return res.status(401).json({ error: "No token" });'
+        ],
+        deletions: [
+          '- // Placeholder middleware'
+        ]
+      }],
     comments: [
       {
         id: '4',
@@ -109,6 +184,31 @@ export const mockPRs: PullRequest[] = [
     reviewers: ['alexchen', 'mariagonzalez'],
     score: 95,
     url: 'https://github.com/techcorp/utils-lib/pull/321',
+    files : [{ 
+        file: 'src/components/Auth.tsx', 
+        changes: '+45 -12',
+        additions: [
+          '+ import { validateToken } from "../utils/auth";',
+          '+ const isAuthenticated = validateToken(token);',
+          '+ if (!isAuthenticated) throw new Error("Invalid token");'
+        ],
+        deletions: [
+          '- // TODO: Add authentication',
+          '- const user = mockUser;'
+        ]
+      },
+      { 
+        file: 'src/middleware/auth.ts', 
+        changes: '+128 -8',
+        additions: [
+          '+ export const authMiddleware = (req, res, next) => {',
+          '+   const token = req.headers.authorization?.split(" ")[1];',
+          '+   if (!token) return res.status(401).json({ error: "No token" });'
+        ],
+        deletions: [
+          '- // Placeholder middleware'
+        ]
+      }],
     comments: [
       {
         id: '5',

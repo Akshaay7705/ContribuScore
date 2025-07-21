@@ -1,25 +1,12 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import { GitBranch } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import React from 'react';
+import { GitBranch, Github } from 'lucide-react';
 
 export default function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const { login, loading } = useAuth();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const handleGitHubLogin = () => {
+    // In a real app, this would redirect to GitHub OAuth
+    // For demo purposes, we'll simulate the login
+    window.location.href = import.meta.env.VITE_BACKEND_ROUTE + '/api/auth/github';
     
-    try {
-      await login(email, password);
-    } catch (err) {
-      setError('Invalid email or password');
-    }
   };
 
   return (
@@ -32,92 +19,53 @@ export default function LoginForm() {
               <GitBranch className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Welcome to PR Insight</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">Sign in to track your GitHub contributions</p>
-          </div>
-
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
-                  placeholder="Enter your password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  {showPassword ? (
-                    <EyeSlashIcon className="w-5 h-5" />
-                  ) : (
-                    <EyeIcon className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-3">
-                <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                'Sign In'
-              )}
-            </button>
-          </form>
-
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
-            <p className="text-sm text-blue-800 dark:text-blue-300 font-medium mb-2">Demo Credentials:</p>
-            <p className="text-sm text-blue-700 dark:text-blue-400">
-              Email: demo@example.com<br />
-              Password: any password
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Analyze your GitHub contributions and track your pull request performance
             </p>
           </div>
 
-          {/* Sign Up Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account?{' '}
-              <Link 
-                to="/signup" 
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
-              >
-                Sign up here
-              </Link>
+          {/* GitHub Login Button */}
+          <div className="space-y-6">
+            <button
+              onClick={handleGitHubLogin}
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-4 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-3 group"
+            >
+              <Github className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <span>Continue with GitHub</span>
+            </button>
+
+            <div className="text-center">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                We'll access your public repositories and pull request data to provide insights
+              </p>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="mt-8 space-y-3">
+            <div className="flex items-center space-x-3 text-sm text-gray-600 dark:text-gray-400">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span>Track pull request acceptance rates</span>
+            </div>
+            <div className="flex items-center space-x-3 text-sm text-gray-600 dark:text-gray-400">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span>Analyze code review feedback</span>
+            </div>
+            <div className="flex items-center space-x-3 text-sm text-gray-600 dark:text-gray-400">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <span>Generate contribution insights</span>
+            </div>
+            <div className="flex items-center space-x-3 text-sm text-gray-600 dark:text-gray-400">
+              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+              <span>Share your developer profile</span>
+            </div>
+          </div>
+
+          {/* Privacy Notice */}
+          <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
+            <p className="text-xs text-blue-800 dark:text-blue-300">
+              <strong>Privacy:</strong> We only access public repository data and never store your GitHub credentials. 
+              You can revoke access at any time from your GitHub settings.
             </p>
           </div>
         </div>
